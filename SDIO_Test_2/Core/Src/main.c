@@ -77,7 +77,7 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-print("Hello World!");
+
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
