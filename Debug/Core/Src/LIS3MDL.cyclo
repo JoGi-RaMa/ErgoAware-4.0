@@ -1,0 +1,6 @@
+../Core/Src/LIS3MDL.c:59:6:LIS3MDL_enableDefault	1
+../Core/Src/LIS3MDL.c:92:6:LIS3MDL_writeReg	1
+../Core/Src/LIS3MDL.c:113:9:LIS3MDL_readReg	3
+../Core/Src/LIS3MDL.c:139:5:LIS3MDL_read	2
+../Core/Src/LIS3MDL.c:164:9:LIS3MDL_read2	2
+../Core/Src/LIS3MDL.c:182:5:LIS3MDL_readRegisters	3

@@ -1,0 +1,14 @@
+../Core/Src/LSM6DSOX.c:62:5:LSM6DSOX_begin	2
+../Core/Src/LSM6DSOX.c:134:9:LSM6DSOX_readRegister8	3
+../Core/Src/LSM6DSOX.c:158:6:LSM6DSOX_writeRegister8	1
+../Core/Src/LSM6DSOX.c:175:6:LSM6DSOX_end	1
+../Core/Src/LSM6DSOX.c:187:5:LSM6DSOX_readAcceleration	2
+../Core/Src/LSM6DSOX.c:209:9:LSM6DSOX_readAcceleration2	2
+../Core/Src/LSM6DSOX.c:226:5:LSM6DSOX_accelerationAvailable	2
+../Core/Src/LSM6DSOX.c:238:5:LSM6DSOX_readGyroscope	2
+../Core/Src/LSM6DSOX.c:260:9:LSM6DSOX_readGyroscope2	2
+../Core/Src/LSM6DSOX.c:276:5:LSM6DSOX_gyroscopeAvailable	2
+../Core/Src/LSM6DSOX.c:288:5:LSM6DSOX_readTemperature	2
+../Core/Src/LSM6DSOX.c:304:9:LSM6DSOX_readTemperature2	2
+../Core/Src/LSM6DSOX.c:319:5:LSM6DSOX_temperatureAvailable	2
+../Core/Src/LSM6DSOX.c:331:5:LSM6DSOX_readRegisters	3
