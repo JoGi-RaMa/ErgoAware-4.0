@@ -124,7 +124,7 @@ float fft_calc()
 	double totalMagnitude2 = 0;
 	medianFrequency = 0;
 
-	for(int i = 0; i < ((n/2) - 1); i++)
+	for(int i = 0; i < n/2; i++)
 	{
 		totalMagnitude2 += realBuffer[i];
 		if(totalMagnitude2 >= halfMagnitude)
