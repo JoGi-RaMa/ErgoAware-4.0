@@ -37,3 +37,29 @@ Command-line arguments:  -os macosx -ws cocoa -arch x86_64 -data /Users/gilberto
 
 !ENTRY org.eclipse.cdt.core 1 0 2023-09-29 12:07:30.346
 !MESSAGE Indexed 'SDIO_Test_2' (47 sources, 146 headers) in 7.3 sec: 16,045 declarations; 95,074 references; 2 unresolved inclusions; 42 syntax errors; 147 unresolved names (0.13%)
+!SESSION 2023-10-02 14:17:15.877 -----------------------------------------------
+eclipse.buildId=Version 1.13.0
+java.version=17.0.6
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=macosx, ARCH=x86_64, WS=cocoa, NL=pt_PT
+Framework arguments:  -keyring /Users/gilbertomartins/.eclipse_keyring
+Command-line arguments:  -os macosx -ws cocoa -arch x86_64 -keyring /Users/gilbertomartins/.eclipse_keyring
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2023-10-02 14:17:20.763
+!MESSAGE Log4j2 initialized with config file /Users/gilbertomartins/Desktop/ErgoAware-4.0/.metadata/.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2023-10-02 14:17:28.296
+!MESSAGE Started RMI Server, listening on port 41337
+!SESSION 2023-10-03 10:05:58.538 -----------------------------------------------
+eclipse.buildId=Version 1.13.0
+java.version=17.0.6
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=macosx, ARCH=x86_64, WS=cocoa, NL=pt_PT
+Framework arguments:  -keyring /Users/gilbertomartins/.eclipse_keyring
+Command-line arguments:  -os macosx -ws cocoa -arch x86_64 -keyring /Users/gilbertomartins/.eclipse_keyring
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2023-10-03 10:06:03.792
+!MESSAGE Log4j2 initialized with config file /Users/gilbertomartins/Desktop/ErgoAware-4.0/.metadata/.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2023-10-03 10:06:12.325
+!MESSAGE Started RMI Server, listening on port 41337

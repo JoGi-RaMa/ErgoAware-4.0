@@ -55,13 +55,85 @@
 // Init selected SAMD timer
 SAMDTimer ITimer(SELECTED_TIMER);
 
-const int n = 100;
+const int n = 128;
 const int samplingFrequency = 1200;
 
 const unsigned long sampleInterval = 833;
-const unsigned long windowWidth = 10000;
+const unsigned long windowWidth = 25000;
 float mvc = 0;
 float offset = 0;
+float medianFrequency = 0;
+
+float a[n];
+float f[n];
+const int bufferSize = 3;
+float buffer[bufferSize];
+int bufferIndex = 0;
+
+float rmsBuffer[n];
+
+int i = 0;
+int j = 0;
+int k = 0;
+
+unsigned long previousMicros = 0;
+
+
+bool flag = false;
+
+float A[] = { 1,         -2.65247741,  0.66214634,  2.59580099,  0.24226609, -3.06708861, -0.14553671,  1.62620564,  0.32596455, -0.53334254, -0.15443221,  0.07297218, 0.02753774};
+float B[] = {0.16593348,  0,         -0.99560088, 0,          2.48900221,  0, -3.31866961,  0,          2.48900221,  0,         -0.99560088,  0,  0.16593348};
+
+
+arduinoFFT FFT;
+
+float fft_calc()
+{
+	double realBuffer[n];
+	double imagBuffer[n];
+	double frequency[n/2];
+
+	for(int i = 0; i < n; i++)
+	{
+		realBuffer[i] = (double)f[i];
+		imagBuffer[i] = 0;
+	}
+
+	for(int i = 0; i < n/2; i++)
+	{
+		frequency[i] = i * (samplingFrequency / n);
+	}
+
+	FFT = arduinoFFT(realBuffer, imagBuffer, n, samplingFrequency);
+
+	FFT.DCRemoval();
+	FFT.Windowing(realBuffer, n, FFT_WIN_TYP_BLACKMAN, FFT_FORWARD);
+	FFT.Compute(realBuffer, imagBuffer, n, FFT_FORWARD);
+	FFT.ComplexToMagnitude(realBuffer, imagBuffer, n);
+
+	double x = FFT.MajorPeak();
+
+	double totalMagnitude = 0;
+
+	for(int i = 0; i < n/2; i++)
+	{
+		totalMagnitude += realBuffer[i];
+	}
+
+	double halfMagnitude = totalMagnitude * 0.5;
+	double totalMagnitude2 = 0;
+	medianFrequency = 0;
+
+	for(int i = 0; i < ((n/2) - 1); i++)
+	{
+		totalMagnitude2 += realBuffer[i];
+		if(totalMagnitude2 >= halfMagnitude)
+		{
+			medianFrequency = frequency[i];
+			break;
+		}
+	}
+}
 
 float calc_offset()
 {
@@ -110,25 +182,6 @@ void potenciometer_resistance()
   Wire.endTransmission();
 }
 
-float a[n];
-float f[n];
-const int bufferSize = 3;
-float buffer[bufferSize];
-int bufferIndex = 0;
-
-float rmsBuffer[n];
-
-int i = 0;
-int j = 0;
-int k = 0;
-
-unsigned long previousMicros = 0;
-
-
-bool flag = false;
-
-float A[] = { 1,         -2.65247741,  0.66214634,  2.59580099,  0.24226609, -3.06708861, -0.14553671,  1.62620564,  0.32596455, -0.53334254, -0.15443221,  0.07297218, 0.02753774};
-float B[] = {0.16593348,  0,         -0.99560088, 0,          2.48900221,  0, -3.31866961,  0,          2.48900221,  0,         -0.99560088,  0,  0.16593348};
 
 ////////////////////////////////////////////////
 
@@ -140,40 +193,40 @@ void TimerHandler()
     
     a[k] = ((analogRead(A0) * (3.3/4095.0)) - offset)/mvc;
     if (k == 0){
-      f[k] = (- A[1]*f[99] - A[2]*f[98] - A[3]*f[97] - A[4]*f[96] - A[5]*f[95] - A[6]*f[94] - A[7]*f[93] - A[8]*f[92] - A[9]*f[91] - A[10]*f[90] - A[11]*f[89] - A[12]*f[88] + B[0]*a[k] + B[1]*a[99] + B[2]*a[98] + B[3]*a[97] + B[4]*a[96] + B[5]*a[95] + B[6]*a[94] + B[7]*a[93] + B[8]*a[92] + B[9]*a[91] + B[10]*a[90] + B[11]*a[89] + B[12]*a[88])/A[0];
+      f[k] = (- A[1]*f[127] - A[2]*f[126] - A[3]*f[125] - A[4]*f[124] - A[5]*f[123] - A[6]*f[122] - A[7]*f[121] - A[8]*f[120] - A[9]*f[119] - A[10]*f[118] - A[11]*f[117] - A[12]*f[116] + B[0]*a[k] + B[1]*a[127] + B[2]*a[126] + B[3]*a[125] + B[4]*a[124] + B[5]*a[123] + B[6]*a[122] + B[7]*a[121] + B[8]*a[120] + B[9]*a[119] + B[10]*a[118] + B[11]*a[117] + B[12]*a[116])/A[0];
     }
     else if(k == 1){
-      f[k] = (- A[1]*f[k-1] - A[2]*f[99] - A[3]*f[98] - A[4]*f[97] - A[5]*f[96] - A[6]*f[95] - A[7]*f[94] - A[8]*f[93] - A[9]*f[92] - A[10]*f[91] - A[11]*f[90] - A[12]*f[89] + B[0]*a[k] + B[1]*a[k-1] + B[2]*a[99] + B[3]*a[98] + B[4]*a[97] + B[5]*a[96] + B[6]*a[95] + B[7]*a[94] + B[8]*a[93] + B[9]*a[92] + B[10]*a[91] + B[11]*a[90] + B[12]*a[89])/A[0];
+      f[k] = (- A[1]*f[k-1] - A[2]*f[127] - A[3]*f[126] - A[4]*f[125] - A[5]*f[124] - A[6]*f[123] - A[7]*f[122] - A[8]*f[121] - A[9]*f[120] - A[10]*f[119] - A[11]*f[118] - A[12]*f[117] + B[0]*a[k] + B[1]*a[k-1] + B[2]*a[127] + B[3]*a[126] + B[4]*a[125] + B[5]*a[124] + B[6]*a[123] + B[7]*a[122] + B[8]*a[121] + B[9]*a[120] + B[10]*a[119] + B[11]*a[118] + B[12]*a[117])/A[0];
     }
     else if(k == 2){
-      f[k] = (- A[1]*f[k-1] - A[2]*f[k-2] - A[3]*f[99] - A[4]*f[98] - A[5]*f[97] - A[6]*f[96] - A[7]*f[95] - A[8]*f[94] - A[9]*f[93] - A[10]*f[92] - A[11]*f[91] - A[12]*f[90] + B[0]*a[k] + B[1]*a[k-1] + B[2]*a[k-2] + B[3]*a[99] + B[4]*a[98] + B[5]*a[97] + B[6]*a[96] + B[7]*a[95] + B[8]*a[94] + B[9]*a[93] + B[10]*a[92] + B[11]*a[91] + B[12]*a[90])/A[0];
+      f[k] = (- A[1]*f[k-1] - A[2]*f[k-2] - A[3]*f[127] - A[4]*f[126] - A[5]*f[125] - A[6]*f[124] - A[7]*f[123] - A[8]*f[122] - A[9]*f[121] - A[10]*f[120] - A[11]*f[119] - A[12]*f[118] + B[0]*a[k] + B[1]*a[k-1] + B[2]*a[k-2] + B[3]*a[127] + B[4]*a[126] + B[5]*a[125] + B[6]*a[124] + B[7]*a[123] + B[8]*a[122] + B[9]*a[121] + B[10]*a[120] + B[11]*a[119] + B[12]*a[118])/A[0];
     }
     else if(k == 3){
-      f[k] = (- A[1]*f[k-1] - A[2]*f[k-2] - A[3]*f[k-3] - A[4]*f[99] - A[5]*f[98] - A[6]*f[97] - A[7]*f[96] - A[8]*f[95] - A[9]*f[94] - A[10]*f[93] - A[11]*f[92] - A[12]*f[91] + B[0]*a[k] + B[1]*a[k-1] + B[2]*a[k-2] + B[3]*a[k-3] + B[4]*a[99] + B[5]*a[98] + B[6]*a[97] + B[7]*a[96] + B[8]*a[95] + B[9]*a[94] + B[10]*a[93] + B[11]*a[92] + B[12]*a[91])/A[0];
+      f[k] = (- A[1]*f[k-1] - A[2]*f[k-2] - A[3]*f[k-3] - A[4]*f[127] - A[5]*f[126] - A[6]*f[125] - A[7]*f[124] - A[8]*f[123] - A[9]*f[122] - A[10]*f[121] - A[11]*f[120] - A[12]*f[119] + B[0]*a[k] + B[1]*a[k-1] + B[2]*a[k-2] + B[3]*a[k-3] + B[4]*a[127] + B[5]*a[126] + B[6]*a[125] + B[7]*a[124] + B[8]*a[123] + B[9]*a[122] + B[10]*a[121] + B[11]*a[120] + B[12]*a[119])/A[0];
     }
     else if(k == 4){
-      f[k] = (- A[1]*f[k-1] - A[2]*f[k-2] - A[3]*f[k-3] - A[4]*f[k-4] - A[5]*f[99] - A[6]*f[98] - A[7]*f[97] - A[8]*f[96] - A[9]*f[95] - A[10]*f[94] - A[11]*f[93] - A[12]*f[92] + B[0]*a[k] + B[1]*a[k-1] + B[2]*a[k-2] + B[3]*a[k-3] + B[4]*a[k-4] + B[5]*a[99] + B[6]*a[98] + B[7]*a[97] + B[8]*a[96] + B[9]*a[95] + B[10]*a[94] + B[11]*a[93] + B[12]*a[92])/A[0];
+      f[k] = (- A[1]*f[k-1] - A[2]*f[k-2] - A[3]*f[k-3] - A[4]*f[k-4] - A[5]*f[127] - A[6]*f[126] - A[7]*f[125] - A[8]*f[124] - A[9]*f[123] - A[10]*f[122] - A[11]*f[121] - A[12]*f[120] + B[0]*a[k] + B[1]*a[k-1] + B[2]*a[k-2] + B[3]*a[k-3] + B[4]*a[k-4] + B[5]*a[127] + B[6]*a[126] + B[7]*a[125] + B[8]*a[124] + B[9]*a[123] + B[10]*a[122] + B[11]*a[121] + B[12]*a[120])/A[0];
     }
     else if(k == 5){
-      f[k] = (- A[1]*f[k-1] - A[2]*f[k-2] - A[3]*f[k-3] - A[4]*f[k-4] - A[5]*f[k-5] - A[6]*f[99] - A[7]*f[98] - A[8]*f[97] - A[9]*f[96] - A[10]*f[95] - A[11]*f[94] - A[12]*f[93] + B[0]*a[k] + B[1]*a[k-1] + B[2]*a[k-2] + B[3]*a[k-3] + B[4]*a[k-4] + B[5]*a[k-5] + B[6]*a[99] + B[7]*a[98] + B[8]*a[97] + B[9]*a[96] + B[10]*a[95] + B[11]*a[94] + B[12]*a[93])/A[0];
+      f[k] = (- A[1]*f[k-1] - A[2]*f[k-2] - A[3]*f[k-3] - A[4]*f[k-4] - A[5]*f[k-5] - A[6]*f[127] - A[7]*f[126] - A[8]*f[125] - A[9]*f[124] - A[10]*f[123] - A[11]*f[122] - A[12]*f[121] + B[0]*a[k] + B[1]*a[k-1] + B[2]*a[k-2] + B[3]*a[k-3] + B[4]*a[k-4] + B[5]*a[k-5] + B[6]*a[127] + B[7]*a[126] + B[8]*a[125] + B[9]*a[124] + B[10]*a[123] + B[11]*a[122] + B[12]*a[121])/A[0];
     }
     else if(k == 6){
-      f[k] = (- A[1]*f[k-1] - A[2]*f[k-2] - A[3]*f[k-3] - A[4]*f[k-4] - A[5]*f[k-5] - A[6]*f[k-6] - A[7]*f[99] - A[8]*f[98] - A[9]*f[97] - A[10]*f[96] - A[11]*f[95] - A[12]*f[94] + B[0]*a[k] + B[1]*a[k-1] + B[2]*a[k-2] + B[3]*a[k-3] + B[4]*a[k-4] + B[5]*a[k-5] + B[6]*a[k-6] + B[7]*a[99] + B[8]*a[98] + B[9]*a[97] + B[10]*a[96] + B[11]*a[95] + B[12]*a[94])/A[0];
+      f[k] = (- A[1]*f[k-1] - A[2]*f[k-2] - A[3]*f[k-3] - A[4]*f[k-4] - A[5]*f[k-5] - A[6]*f[k-6] - A[7]*f[127] - A[8]*f[126] - A[9]*f[125] - A[10]*f[124] - A[11]*f[123] - A[12]*f[122] + B[0]*a[k] + B[1]*a[k-1] + B[2]*a[k-2] + B[3]*a[k-3] + B[4]*a[k-4] + B[5]*a[k-5] + B[6]*a[k-6] + B[7]*a[127] + B[8]*a[126] + B[9]*a[125] + B[10]*a[124] + B[11]*a[123] + B[12]*a[122])/A[0];
     }
     else if(k == 7){
-      f[k] = (- A[1]*f[k-1] - A[2]*f[k-2] - A[3]*f[k-3] - A[4]*f[k-4] - A[5]*f[k-5] - A[6]*f[k-6] - A[7]*f[k-7] - A[8]*f[99] - A[9]*f[98] - A[10]*f[97] - A[11]*f[96] - A[12]*f[95] + B[0]*a[k] + B[1]*a[k-1] + B[2]*a[k-2] + B[3]*a[k-3] + B[4]*a[k-4] + B[5]*a[k-5] + B[6]*a[k-6] + B[7]*a[k-7] + B[8]*a[99] + B[9]*a[98] + B[10]*a[97] + B[11]*a[96] + B[12]*a[95])/A[0];
+      f[k] = (- A[1]*f[k-1] - A[2]*f[k-2] - A[3]*f[k-3] - A[4]*f[k-4] - A[5]*f[k-5] - A[6]*f[k-6] - A[7]*f[k-7] - A[8]*f[127] - A[9]*f[126] - A[10]*f[125] - A[11]*f[124] - A[12]*f[123] + B[0]*a[k] + B[1]*a[k-1] + B[2]*a[k-2] + B[3]*a[k-3] + B[4]*a[k-4] + B[5]*a[k-5] + B[6]*a[k-6] + B[7]*a[k-7] + B[8]*a[127] + B[9]*a[126] + B[10]*a[125] + B[11]*a[124] + B[12]*a[123])/A[0];
     }
     else if(k == 8){
-      f[k] = (- A[1]*f[k-1] - A[2]*f[k-2] - A[3]*f[k-3] - A[4]*f[k-4] - A[5]*f[k-5] - A[6]*f[k-6] - A[7]*f[k-7] - A[8]*f[k-8] - A[9]*f[99] - A[10]*f[98] - A[11]*f[97] - A[12]*f[96] + B[0]*a[k] + B[1]*a[k-1] + B[2]*a[k-2] + B[3]*a[k-3] + B[4]*a[k-4] + B[5]*a[k-5] + B[6]*a[k-6] + B[7]*a[k-7] + B[8]*a[k-8] + B[9]*a[99] + B[10]*a[98]+ B[11]*a[97] + B[12]*a[96])/A[0];
+      f[k] = (- A[1]*f[k-1] - A[2]*f[k-2] - A[3]*f[k-3] - A[4]*f[k-4] - A[5]*f[k-5] - A[6]*f[k-6] - A[7]*f[k-7] - A[8]*f[k-8] - A[9]*f[127] - A[10]*f[126] - A[11]*f[125] - A[12]*f[124] + B[0]*a[k] + B[1]*a[k-1] + B[2]*a[k-2] + B[3]*a[k-3] + B[4]*a[k-4] + B[5]*a[k-5] + B[6]*a[k-6] + B[7]*a[k-7] + B[8]*a[k-8] + B[9]*a[127] + B[10]*a[126]+ B[11]*a[125] + B[12]*a[124])/A[0];
     }
     else if(k == 9){
-      f[k] = (- A[1]*f[k-1] - A[2]*f[k-2] - A[3]*f[k-3] - A[4]*f[k-4] - A[5]*f[k-5] - A[6]*f[k-6] - A[7]*f[k-7] - A[8]*f[k-8] - A[9]*f[k-9] - A[10]*f[99] - A[11]*f[98] - A[12]*f[97] + B[0]*a[k] + B[1]*a[k-1] + B[2]*a[k-2] + B[3]*a[k-3] + B[4]*a[k-4] + B[5]*a[k-5] + B[6]*a[k-6] + B[7]*a[k-7] + B[8]*a[k-8] + B[9]*a[k-9] + B[10]*a[99] + B[11]*a[98] + B[12]*a[97])/A[0];
+      f[k] = (- A[1]*f[k-1] - A[2]*f[k-2] - A[3]*f[k-3] - A[4]*f[k-4] - A[5]*f[k-5] - A[6]*f[k-6] - A[7]*f[k-7] - A[8]*f[k-8] - A[9]*f[k-9] - A[10]*f[127] - A[11]*f[126] - A[12]*f[125] + B[0]*a[k] + B[1]*a[k-1] + B[2]*a[k-2] + B[3]*a[k-3] + B[4]*a[k-4] + B[5]*a[k-5] + B[6]*a[k-6] + B[7]*a[k-7] + B[8]*a[k-8] + B[9]*a[k-9] + B[10]*a[127] + B[11]*a[126] + B[12]*a[125])/A[0];
     }
     else if(k == 10){
-      f[k] = (- A[1]*f[k-1] - A[2]*f[k-2] - A[3]*f[k-3] - A[4]*f[k-4] - A[5]*f[k-5] - A[6]*f[k-6] - A[7]*f[k-7] - A[8]*f[k-8] - A[9]*f[k-9] - A[10]*f[k-10] - A[11]*f[99] - A[12]*f[98] + B[0]*a[k] + B[1]*a[k-1] + B[2]*a[k-2] + B[3]*a[k-3] + B[4]*a[k-4] + B[5]*a[k-5] + B[6]*a[k-6] + B[7]*a[k-7] + B[8]*a[k-8] + B[9]*a[k-9] + B[10]*a[k-10] + B[11]*a[99] + B[12]*a[98])/A[0];
+      f[k] = (- A[1]*f[k-1] - A[2]*f[k-2] - A[3]*f[k-3] - A[4]*f[k-4] - A[5]*f[k-5] - A[6]*f[k-6] - A[7]*f[k-7] - A[8]*f[k-8] - A[9]*f[k-9] - A[10]*f[k-10] - A[11]*f[127] - A[12]*f[126] + B[0]*a[k] + B[1]*a[k-1] + B[2]*a[k-2] + B[3]*a[k-3] + B[4]*a[k-4] + B[5]*a[k-5] + B[6]*a[k-6] + B[7]*a[k-7] + B[8]*a[k-8] + B[9]*a[k-9] + B[10]*a[k-10] + B[11]*a[127] + B[12]*a[126])/A[0];
     }
     else if(k == 11){
-      f[k] = (- A[1]*f[k-1] - A[2]*f[k-2] - A[3]*f[k-3] - A[4]*f[k-4] - A[5]*f[k-5] - A[6]*f[k-6] - A[7]*f[k-7] - A[8]*f[k-8] - A[9]*f[k-9] - A[10]*f[k-10] - A[11]*f[k-11] - A[12]*f[99] + B[0]*a[k] + B[1]*a[k-1] + B[2]*a[k-2] + B[3]*a[k-3] + B[4]*a[k-4] + B[5]*a[k-5] + B[6]*a[k-6] + B[7]*a[k-7] + B[8]*a[k-8] + B[9]*a[k-9] + B[10]*a[k-10] + B[11]*a[k-11] + B[12]*a[99])/A[0];
+      f[k] = (- A[1]*f[k-1] - A[2]*f[k-2] - A[3]*f[k-3] - A[4]*f[k-4] - A[5]*f[k-5] - A[6]*f[k-6] - A[7]*f[k-7] - A[8]*f[k-8] - A[9]*f[k-9] - A[10]*f[k-10] - A[11]*f[k-11] - A[12]*f[127] + B[0]*a[k] + B[1]*a[k-1] + B[2]*a[k-2] + B[3]*a[k-3] + B[4]*a[k-4] + B[5]*a[k-5] + B[6]*a[k-6] + B[7]*a[k-7] + B[8]*a[k-8] + B[9]*a[k-9] + B[10]*a[k-10] + B[11]*a[k-11] + B[12]*a[127])/A[0];
     }
     else{
       f[k] = (- A[1]*f[k-1] - A[2]*f[k-2] - A[3]*f[k-3] - A[4]*f[k-4] - A[5]*f[k-5] - A[6]*f[k-6] - A[7]*f[k-7] - A[8]*f[k-8] - A[9]*f[k-9] - A[10]*f[k-10] - A[11]*f[k-11] - A[12]*f[k-12] + B[0]*a[k] + B[1]*a[k-1] + B[2]*a[k-2] + B[3]*a[k-3] + B[4]*a[k-4] + B[5]*a[k-5] + B[6]*a[k-6] + B[7]*a[k-7] + B[8]*a[k-8] + B[9]*a[k-9] + B[10]*a[k-10] + B[11]*a[k-11] + B[12]*a[k-12])/A[0];
@@ -232,6 +285,7 @@ void loop()
   
   if(flag)
   {
+    digitalWrite(7, HIGH);
     digitalWrite(6, HIGH);
     k = 0;
     j = 0;
@@ -277,16 +331,28 @@ void loop()
     rmsValues[rmsCounter] = rmsValue;
     rmsCounter++;
 
-    if (rmsCounter == 3) {
-      digitalWrite(7, HIGH);
+    if (rmsCounter == 3) 
+    {
+      fft_calc();
       // Send the 3 values over serial
-      for (int i = 0; i < 3; i++) {
-        Serial1.println(rmsValues[i]);
+      for (int i = 0; i < 3; i++) 
+      {
+        if(i < 2)
+        {
+          Serial1.println(rmsValues[i]);
+        }
+        else
+        {
+          Serial1.print(rmsValues[i]);
+          Serial1.print(";");
+          Serial1.println(medianFrequency);
+        }
       } // End of batch
       // Reset the counter and timer
       rmsCounter = 0;
       digitalWrite(7, LOW);
     }
+
     digitalWrite(6, LOW);
     flag = false; 
   }
