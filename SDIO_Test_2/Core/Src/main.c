@@ -133,7 +133,7 @@ int buffer_length = 0;
 unsigned int i = 0;
 int n_int = 0;
 int emg_n_int = 0;
-int gyro_fs = 1000;
+int gyro_fs = 600;
 int flag = 0;
 int emg_flag = 0;
 
@@ -165,9 +165,9 @@ typedef struct
 
 typedef struct
 {
-	float x[10];
-	float y[10];
-	float z[10];
+	float x[6];
+	float y[6];
+	float z[6];
 }Gyro_readings;
 
 typedef struct
@@ -365,25 +365,28 @@ int main(void)
   {
 	  if(flag == 1)
 	  {
+		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
 
 		  char temp_buffer[TEMP_BUFFER_SIZE];
 		  Gyro_Reading();
 		  n_int++;
-		  if(n_int == 10)
+		  if(n_int == 6)
 		  {
 
 			  Acc_Mag_Reading();
-			  SDI();
+			  //SDI();
 			  //Gyro_Integration_Test();
-			  Complementary_filter();
+			  //Complementary_filter();
 
-			  int temp_length = sprintf((char*)temp_buffer, "%.3f;%.3f;%.3f;%.3f",
-					  Estim_ang[0].roll, Estim_ang[0].pitch, Estim_ang[1].roll, Estim_ang[1].pitch);
+			  /*int temp_length = sprintf((char*)temp_buffer, "%.3f;%.3f;%.3f;%.3f;%.3f;%.3f\n",
+					 );*/
 
-			  /*int temp_length = sprintf((char*)temp_buffer, "%.3f;%.3f",
-			  					   SDIareas[1].area_x, SDIareas[1].area_y);*/
+			  int temp_length = sprintf((char*)temp_buffer, "0.00;0.00;0.00;%.3f;%.3f;%.3f\n",
+			  					   Acc_data[0].x, Acc_data[0].y, Acc_data[0].z);
 
-			  for(size_t k = strlen(temp_buffer); k < TEMP_BUFFER_SIZE - 1; k++)
+			  CDC_Transmit_FS((uint8_t*)temp_buffer, strlen(temp_buffer));
+
+			  /*for(size_t k = strlen(temp_buffer); k < TEMP_BUFFER_SIZE - 1; k++)
 			  {
 				  temp_buffer[k] = ' ';
 			  }
@@ -412,16 +415,17 @@ int main(void)
 				  memset(&SDIareas[i].area_x, 0, sizeof(SDIareas[i].area_x));
 				  memset(&SDIareas[i].area_y, 0, sizeof(SDIareas[i].area_y));
 				  memset(&SDIareas[i].area_z, 0, sizeof(SDIareas[i].area_z));
-			  }
+			  }*/
 
 			  n_int = 0;
+			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
 
 		  }
 
 		  flag = 0;
 	  }
 
-	  if(emg_flag == 1)
+	  /*if(emg_flag == 1)
 	  {
 		  emg_n_int++;
 		  if(emg_n_int == 215)
@@ -432,7 +436,7 @@ int main(void)
 			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
 		  }
 		  emg_flag = 0;
-	  }
+	  }*/
 
     /* USER CODE END WHILE */
 
@@ -569,7 +573,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 4200-1;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 20-1;
+  htim2.Init.Period = 33-1;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -664,10 +668,10 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1|GPIO_PIN_2, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : PC1 */
-  GPIO_InitStruct.Pin = GPIO_PIN_1;
+  /*Configure GPIO pins : PC1 PC2 */
+  GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_2;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -685,6 +689,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
 FRESULT AppendToFile(char* path, size_t path_len, char* buf, size_t buf_len)
 {
 	FATFS myFatFS;
@@ -750,9 +755,9 @@ void BlinkLED(uint32_t blink_delay, uint8_t num_blinks) {
 
 void Gyro_Reading()
 {
-	//HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
 	int i;
-	//char test_buffer[20];
+	char test_buffer[30];
 	for(i = 0;i < 2;i++)
 	{
 		switch(i)
@@ -778,9 +783,9 @@ void Gyro_Reading()
 				break;
 		}
 	}
-	//sprintf((char*)test_buffer, "%.3f;%.3f;%.3f\n", Gyro_data[1].x[n_int-1], Gyro_data[1].y[n_int-1], Gyro_data[1].z[n_int-1]);
-	//CDC_Transmit_FS((uint8_t*)test_buffer, strlen(test_buffer));
-	//HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+	sprintf((char*)test_buffer, "%.3f;%.3f;%.3f;0.000;0.000;0.000\n", Gyro_data[0].x[n_int-1], Gyro_data[0].y[n_int-1], Gyro_data[0].z[n_int-1]);
+	CDC_Transmit_FS((uint8_t*)test_buffer, strlen(test_buffer));
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
 }
 
 void Acc_Mag_Reading()

@@ -123,8 +123,8 @@ int LSM6DSOX_begin(I2C_HandleTypeDef* I2Cx, uint8_t imu_address) // Wake up the 
 	// For 2000dps: FS_G = 11
 	// FS_125 = 0
 	// 10001100 -> 0x8C
-  LSM6DSOX_writeRegister8(I2Cx, imu_address, LSM6DSOX_CTRL2_G, 0x8C);
-  gyr_FS = 2000; // dps
+  LSM6DSOX_writeRegister8(I2Cx, imu_address, LSM6DSOX_CTRL2_G, 0x74);
+  gyr_FS = 500; // dps
 
   return 1;
 }

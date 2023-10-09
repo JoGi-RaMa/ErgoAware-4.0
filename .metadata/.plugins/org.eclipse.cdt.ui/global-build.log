@@ -1,7 +1,7 @@
-14:24:39 **** Incremental Build of configuration Debug for project SDIO_Test_2 ****
+17:22:30 **** Incremental Build of configuration Debug for project SDIO_Test_2 ****
 make -j7 all 
 arm-none-eabi-size   SDIO_Test_2.elf 
    text	   data	    bss	    dec	    hex	filename
-  89268	    768	  11192	 101228	  18b6c	SDIO_Test_2.elf
+  75892	    736	   9960	  86588	  1523c	SDIO_Test_2.elf
 Finished building: default.size.stdout
  
