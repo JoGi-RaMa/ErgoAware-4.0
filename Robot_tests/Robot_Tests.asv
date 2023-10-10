@@ -6,15 +6,7 @@ angleZ = 0;
 
 Accel_pitch = 0;
 acc_roll = 0;
-pitch=[];
-pitch2 = [];
-roll = [];
-
-Gyro_data_x = [];
-
-angleXarray = zeros(length(pitch40pausado.GyrX), 1);
-angleYarray = zeros(length(pitch40pausado.GyrY), 1);
-angleZarray = zeros(length(pitch40pausado.GyrZ), 1);
+pitch = [];
 
 fs = 535;
 
@@ -51,10 +43,14 @@ roll120_downsample = rad2deg(roll120_downsample);
 
 %% Gyroscope angle estimation
 
+angleXarray = zeros(length(Gyro_data_x), 1);
+angleYarray = zeros(length(Gyro_data_y), 1);
+angleZarray = zeros(length(Gyro_data_z), 1);
+
 for i = 2:length(Gyro_data_x)
-    angleX = angleX + Gyro_data_x(i) * (1/fs);%%((Gyro_data_x(i-1) + Gyro_data_x(i))/(2*fs));
-    angleY = angleY + Gyro_data_y(i) * (1/fs);%%((Gyro_data_y(i-1) + Gyro_data_y(i))/(2*fs));
-    angleZ = angleZ + Gyro_data_z(i) * (1/fs);%%((Gyro_data_z(i-1) + Gyro_data_z(i))/(2*fs));
+    angleX = angleX + (Gyro_data_x(i) * (1/fs));%%((Gyro_data_x(i-1) + Gyro_data_x(i))/(2*fs));
+    angleY = angleY + (Gyro_data_y(i) * (1/fs));%%((Gyro_data_y(i-1) + Gyro_data_y(i))/(2*fs));
+    angleZ = angleZ + (Gyro_data_z(i) * (1/fs));%%((Gyro_data_z(i-1) + Gyro_data_z(i))/(2*fs));
 
     angleXarray(i) = angleX;
     angleYarray(i) = angleY;
@@ -66,28 +62,30 @@ Acc_data_x = Acc_data_x/max(Acc_data_x);
 Acc_data_y = Acc_data_y/max(Acc_data_y);
 Acc_data_z = Acc_data_z/max(Acc_data_z);
 
+acc_pitch = 0;
+
 pitch = [];
-pitch2 = [];
+
+label = [];
+
 for i=1:length(Acc_data_x)
-    %Accel_pitch = asin(accx(i)/(sqrt(accx(i)^2 + accy(i)^2 + accz(i)^2)));
-    %Accel_roll = atan2(accx(i),accy(i));
 
-    if Acc_data_x(i) < 0 && abs(Acc_data_z(i)) < eps
-    acc_pitch = 180;  % or -180, choose the appropriate value
+    raw_angle = atan2d(Acc_data_z(i), -Acc_data_x(i));
+
+    if(Acc_data_x(i) > 0.7 && Acc_data_z(i) < 0.05 && Acc_data_z(i) > -0.05)
+        if(pitch(i-1) > 170)
+            acc_pitch = 180;
+        elseif(pitch(i-1) < -170)
+            acc_pitch = -180;
+        end
     else
-    acc_pitch = wrapTo180(atan2d(Acc_data_z(i), Acc_data_x(i)));
- 
-
-    %acc_pitch2 = rad2deg(atan2(Acc_data_y(i),Acc_data_x(i)));
-
-    %acc_roll = rad2deg(atan2(accx(i),accz(i)));
+        acc_pitch = raw_angle;
+    end
 
     pitch = [pitch; acc_pitch];
-    %pitch2 = [pitch2; acc_pitch2];
-    %roll = [roll acc_roll];
 end
 
+angleYarray = resample(angleYarray,)
 %pitch_norm = pitch/180;
-%pitch2_norm = pitch2/180;
 
 
