@@ -365,7 +365,8 @@ int main(void)
   {
 	  if(flag == 1)
 	  {
-		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
+
+
 
 		  char temp_buffer[TEMP_BUFFER_SIZE];
 		  Gyro_Reading();
@@ -374,19 +375,19 @@ int main(void)
 		  {
 
 			  Acc_Mag_Reading();
-			  //SDI();
+			  SDI();
 			  //Gyro_Integration_Test();
-			  //Complementary_filter();
+			  Complementary_filter();
 
-			  /*int temp_length = sprintf((char*)temp_buffer, "%.3f;%.3f;%.3f;%.3f;%.3f;%.3f\n",
-					 );*/
+			  int temp_length = sprintf((char*)temp_buffer, "%.3f;%.3f;%.3f;%.3f",
+					 Estim_ang[0].pitch, Estim_ang[0].roll, Estim_ang[1].pitch, Estim_ang[1].roll);
 
-			  int temp_length = sprintf((char*)temp_buffer, "0.00;0.00;0.00;%.3f;%.3f;%.3f\n",
+			  /*int temp_length = sprintf((char*)temp_buffer, "0.00;0.00;0.00;%.3f;%.3f;%.3f\n",
 			  					   Acc_data[0].x, Acc_data[0].y, Acc_data[0].z);
 
-			  CDC_Transmit_FS((uint8_t*)temp_buffer, strlen(temp_buffer));
+			  CDC_Transmit_FS((uint8_t*)temp_buffer, strlen(temp_buffer));*/
 
-			  /*for(size_t k = strlen(temp_buffer); k < TEMP_BUFFER_SIZE - 1; k++)
+			  for(size_t k = strlen(temp_buffer); k < TEMP_BUFFER_SIZE - 1; k++)
 			  {
 				  temp_buffer[k] = ' ';
 			  }
@@ -394,7 +395,7 @@ int main(void)
 			  if(buffer_length + TEMP_BUFFER_SIZE >= BUFFER_SIZE)
 			  {
 
-				  CDC_Transmit_FS((uint8_t*)buf, strlen(buf));
+				  //CDC_Transmit_FS((uint8_t*)buf, strlen(buf));
 				  AppendToFile(log_path, strlen(log_path), buf, strlen(buf));
 				  buffer_length = 0;
 			  }
@@ -410,7 +411,7 @@ int main(void)
 
 			  int i;
 
-			  for(i = 0; i < 2; i++)
+			  /*for(i = 0; i < 2; i++)
 			  {
 				  memset(&SDIareas[i].area_x, 0, sizeof(SDIareas[i].area_x));
 				  memset(&SDIareas[i].area_y, 0, sizeof(SDIareas[i].area_y));
@@ -418,17 +419,15 @@ int main(void)
 			  }*/
 
 			  n_int = 0;
-			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
-
 		  }
 
 		  flag = 0;
 	  }
 
-	  /*if(emg_flag == 1)
+	  if(emg_flag == 1)
 	  {
 		  emg_n_int++;
-		  if(emg_n_int == 215)
+		  if(emg_n_int == 126)
 		  {
 			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
 			  EMG_Data_Reception();
@@ -436,7 +435,7 @@ int main(void)
 			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
 		  }
 		  emg_flag = 0;
-	  }*/
+	  }
 
     /* USER CODE END WHILE */
 
@@ -755,7 +754,7 @@ void BlinkLED(uint32_t blink_delay, uint8_t num_blinks) {
 
 void Gyro_Reading()
 {
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+	//HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
 	int i;
 	char test_buffer[30];
 	for(i = 0;i < 2;i++)
@@ -783,14 +782,14 @@ void Gyro_Reading()
 				break;
 		}
 	}
-	sprintf((char*)test_buffer, "%.3f;%.3f;%.3f;0.000;0.000;0.000\n", Gyro_data[0].x[n_int-1], Gyro_data[0].y[n_int-1], Gyro_data[0].z[n_int-1]);
+	/*sprintf((char*)test_buffer, "%.3f;%.3f;%.3f;0.000;0.000;0.000\n", Gyro_data[0].x[n_int-1], Gyro_data[0].y[n_int-1], Gyro_data[0].z[n_int-1]);
 	CDC_Transmit_FS((uint8_t*)test_buffer, strlen(test_buffer));
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);*/
 }
 
 void Acc_Mag_Reading()
 {
-	//HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+
 	int i;
 
 	for(i = 0;i < 2;i++)
@@ -819,7 +818,7 @@ void Acc_Mag_Reading()
 		  }
 	  }
 
-	//HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+
 }
 
 void SDI()
@@ -874,7 +873,7 @@ void EMG_Data_Reception()
 {
 	if(HAL_UART_Receive(&huart3, (uint8_t*)rx_data, sizeof(rx_data), HAL_MAX_DELAY) == HAL_OK)
 	{
-		//CDC_Transmit_FS((uint8_t*)rx_data, strlen(rx_data));
+		CDC_Transmit_FS((uint8_t*)rx_data, strlen(rx_data));
 		AppendToFile(emg_log_path, sizeof(emg_log_path), (char*)rx_data, sizeof(rx_data));
 	}
 

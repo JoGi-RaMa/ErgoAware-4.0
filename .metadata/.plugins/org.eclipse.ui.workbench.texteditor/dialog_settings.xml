@@ -6,8 +6,9 @@
 		<item key="wholeword" value="false"/>
 		<item key="incremental" value="false"/>
 		<item key="isRegEx" value="false"/>
-		<item key="selection" value="// dps"/>
+		<item key="selection" value="HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);"/>
 		<list key="findhistory">
+			<item value="HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);"/>
 			<item value="ctrl_4"/>
 			<item value="gyr_FS"/>
 			<item value="16g"/>

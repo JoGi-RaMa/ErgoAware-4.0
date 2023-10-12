@@ -285,7 +285,6 @@ void loop()
   
   if(flag)
   {
-    digitalWrite(7, HIGH);
     digitalWrite(6, HIGH);
     k = 0;
     j = 0;
@@ -333,6 +332,7 @@ void loop()
 
     if (rmsCounter == 3) 
     {
+      digitalWrite(7, HIGH);
       fft_calc();
       // Send the 3 values over serial
       for (int i = 0; i < 3; i++) 
