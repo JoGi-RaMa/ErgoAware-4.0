@@ -20,18 +20,18 @@ Acc_data_x = [];
 Acc_data_y = [];
 Acc_data_z = [];
 
-Gyro_data_index = pitch120.GyrX ~= 0, 1:3; %índices
+Gyro_data_index = pitch40pausado.GyrX ~= 0, 1:3; %índices
 
 for i = 1:length(Gyro_data_index)
     if(Gyro_data_index(i) == 1)
-        Gyro_data_x = [Gyro_data_x; pitch120.GyrX(i)];
-        Gyro_data_y = [Gyro_data_y; pitch120.GyrY(i)];
-        Gyro_data_z = [Gyro_data_z; pitch120.GyrZ(i)];
+        Gyro_data_x = [Gyro_data_x; pitch40pausado.GyrX(i)];
+        Gyro_data_y = [Gyro_data_y; pitch40pausado.GyrY(i)];
+        Gyro_data_z = [Gyro_data_z; pitch40pausado.GyrZ(i)];
     
     else
-        Acc_data_x = [Acc_data_x; pitch120.AccX(i)];
-        Acc_data_y = [Acc_data_y; pitch120.AccY(i)];
-        Acc_data_z = [Acc_data_z; pitch120.AccZ(i)];
+        Acc_data_x = [Acc_data_x; pitch40pausado.AccX(i)];
+        Acc_data_y = [Acc_data_y; pitch40pausado.AccY(i)];
+        Acc_data_z = [Acc_data_z; pitch40pausado.AccZ(i)];
 
     end 
 end
@@ -40,7 +40,7 @@ end
 
 %% Process Robot data
 
-robot_data = resample(pitch120robot.Angle, 100, 400);
+robot_data = resample(pitch40pausadorobot.Angle, 100, 400);
 
 robot_data = -rad2deg(robot_data);
 
