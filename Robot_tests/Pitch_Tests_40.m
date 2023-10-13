@@ -36,11 +36,15 @@ for i = 1:length(Gyro_data_index)
     end 
 end
 
+Acc_data_x = resample(Acc_data_x, 90, 100);
+Acc_data_y = resample(Acc_data_y, 90, 100);
+Acc_data_z = resample(Acc_data_z, 90, 100);
+
 
 
 %% Process Robot data
 
-robot_data = resample(pitch40pausadorobot.Angle, 100, 400);
+robot_data = resample(pitch40pausadorobot2.Angle, 90, 482);
 
 robot_data = -rad2deg(robot_data);
 
@@ -93,7 +97,7 @@ angleYarray = [];
 angleZarray = [];
 
 alpha = 0.981646;
-num_groups = length(Gyro_data_x)/6;
+num_groups = length(Gyro_data_x)/6.67;
 
 for i = 1:num_groups
 
@@ -120,35 +124,16 @@ robot_data_final = robot_data;
 pitch_comp_final = angleYarray;
 
 if length(angleYarray) > length(robot_data)
-    for i=length(robot_data):length(angleYarray)-1
-        robot_data_final = [robot_data_final; robot_data(length(robot_data))];
+    for i=length(robot_data):length(angleYarray)
+        robot_data_final(i) = robot_data(length(robot_data));
     end
 
 elseif length(robot_data) > length(angleYarray)
-    for i=length(angleYarray):length(robot_data)-1
-        pitch_comp_final = [pitch_comp_final; angleYarray(length(angleYarray))];
+    for i=length(angleYarray):length(robot_data)
+        pitch_comp_final(i) = angleYarray(length(angleYarray));
     end
 
 end
-
-% [align_robot_data align_imu_data] = alignsignals(robot_data, pitch_comp);
-% 
-% align_robot_data_final = align_robot_data;
-% align_imu_data_final = align_imu_data;
-% 
-% if length(align_imu_data) > length(align_robot_data)
-%     for i=length(align_robot_data):length(align_imu_data)-1
-%         align_robot_data_final = [align_robot_data_final; align_robot_data(length(align_robot_data))];
-%     end
-% 
-% elseif length(align_robot_data) > length(align_imu_data)
-%     for i=length(align_imu_data):length(align_robot_data)-1
-%         align_imu_data_final = [align_imu_data_final; align_imu_data(length(align_imu_data))];
-%     end
-% end
-
-% [P, L] = findpeaks(align_imu_data_final);
-% [P2, L2] = findpeaks(align_robot_data_final);
 
 %% Dataset alignment
 
@@ -156,7 +141,7 @@ index_x_start = find(robot_data_final > 0.01, 1, "first");
 index_y_start = 110 + find(pitch_comp_final(110:end) > 0.01, 1, "first");
 
 align_robot_data = robot_data(index_x_start:end, :);
-align_imu_data = pitch_comp(index_y_start:end, :);
+align_imu_data = pitch(index_y_start:end, :);
 
 align_robot_data_final = align_robot_data;
 align_imu_data_final = align_imu_data;

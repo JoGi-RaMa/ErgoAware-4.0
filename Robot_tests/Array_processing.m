@@ -16,13 +16,13 @@ cycle1_robot_processed = cycle1_robot;
 cycle1_imu_processed = cycle1_imu;
 
 if length(cycle1_imu) > length(cycle1_robot)
-    for i=length(cycle1_robot):length(cycle1_imu)-1
-        cycle1_robot_processed = [cycle1_robot_processed; cycle1_robot(length(cycle1_robot))];
+    for i=length(cycle1_robot):length(cycle1_imu)
+        cycle1_robot_processed(i) = cycle1_robot(length(cycle1_robot));
     end
 
 elseif length(cycle1_robot) > length(cycle1_imu)
-    for i=length(cycle1_imu):length(cycle1_robot)-1
-        cycle1_imu_processed = [cycle1_imu_processed; cycle1_imu(length(cycle1_imu))];
+    for i=length(cycle1_imu):length(cycle1_robot)
+        cycle1_imu_processed(i) = cycle1_imu(length(cycle1_imu));
     end
 
 end
@@ -97,3 +97,10 @@ robot_data_align = [];
 
 imu_data_align = [imu_data_align; cycle1_imu_processed; cycle2_imu_processed; cycle3_imu_processed; cycle4_imu_processed; cycle5_imu_processed];
 robot_data_align = [robot_data_align; cycle1_robot_processed; cycle2_robot_processed; cycle3_robot_processed; cycle4_robot_processed; cycle5_robot_processed];
+
+%% RMS Error
+residuals = robot_data_align - imu_data_align;
+squared_residuals = residuals.^2;
+mean_squared_residuals = mean(squared_residuals);
+
+rms_error = sqrt(mean_squared_residuals);
