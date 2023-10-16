@@ -40,7 +40,7 @@ Acc_data_z = resample(Acc_data_z, 80, 100);
 
 %% Process Robot data
 
-robot_data = resample(roll40robot.Angle, 80, 484);
+robot_data = resample(roll40robot.Angle, 80, 472);
 
 robot_data = -rad2deg(robot_data);
 
@@ -136,7 +136,7 @@ end
 index_x_start = find(robot_data_final > 0.01, 1, "first");
 index_y_start = find(roll_comp_final > 0.01, 1, "first");
 
-align_robot_data = robot_data_final(index_x_start:end, :);
+align_robot_data = robot_data(index_x_start:end, :);
 align_imu_data = angleZarray(index_y_start:end, :);
 
 align_robot_data_final = align_robot_data;
@@ -167,13 +167,13 @@ array_robot_aligned = [array_robot_aligned; m];
 
 %% Last cycle cutoff
 
-array_imu = array_imu_aligned(1:6706);
-array_robot = array_robot_aligned(1:6706);
+array_imu = array_imu_aligned(1:6523);
+array_robot = array_robot_aligned(1:6523);
 
 %% Error calculation
 rms_error = [];
 
-residuals = array_imu - array_robot;
+residuals = robot_data_final - roll_comp_final;
 squared_residuals = residuals.^2;
 mean_squared_residuals = mean(squared_residuals);
 

@@ -18,25 +18,29 @@ Acc_data_x = [];
 Acc_data_y = [];
 Acc_data_z = [];
 
-Gyro_data_index = roll120pausado.GyrX ~= 0, 1:3; %índices
+Gyro_data_index = roll120.GyrX ~= 0, 1:3; %índices
 
 for i = 1:length(Gyro_data_index)
     if(Gyro_data_index(i) == 1)
-        Gyro_data_x = [Gyro_data_x; roll120pausado.GyrX(i)];
-        Gyro_data_y = [Gyro_data_y; roll120pausado.GyrY(i)];
-        Gyro_data_z = [Gyro_data_z; roll120pausado.GyrZ(i)];
+        Gyro_data_x = [Gyro_data_x; roll120.GyrX(i)];
+        Gyro_data_y = [Gyro_data_y; roll120.GyrY(i)];
+        Gyro_data_z = [Gyro_data_z; roll120.GyrZ(i)];
     
     else
-        Acc_data_x = [Acc_data_x; roll120pausado.AccX(i)];
-        Acc_data_y = [Acc_data_y; roll120pausado.AccY(i)];
-        Acc_data_z = [Acc_data_z; roll120pausado.AccZ(i)];
+        Acc_data_x = [Acc_data_x; roll120.AccX(i)];
+        Acc_data_y = [Acc_data_y; roll120.AccY(i)];
+        Acc_data_z = [Acc_data_z; roll120.AccZ(i)];
 
     end 
 end
 
+Acc_data_x = resample(Acc_data_x, 80, 100);
+Acc_data_y = resample(Acc_data_y, 80, 100);
+Acc_data_z = resample(Acc_data_z, 80, 100);
+
 %% Process Robot data
 
-robot_data = resample(roll120pausadorobot.Angle, 100, 432);
+robot_data = resample(roll120robot.Angle, 80, 470);
 
 robot_data = -rad2deg(robot_data);
 
@@ -89,13 +93,13 @@ angleYarray = [];
 angleZarray = [];
 
 alpha = 0.981646;
-num_groups = length(Gyro_data_x)/6;
+num_groups = length(Gyro_data_x)/7.5;
 
 for i = 1:num_groups
 
-    gyro6_samples_X = Gyro_data_x((i-1)*6 + 1 : i*6);
-    gyro6_samples_Y = Gyro_data_y((i-1)*6 + 1 : i*6);
-    gyro6_samples_Z = Gyro_data_z((i-1)*6 + 1 : i*6);
+    gyro6_samples_X = Gyro_data_x((i-1)*7 + 1 : i*7);
+    gyro6_samples_Y = Gyro_data_y((i-1)*7 + 1 : i*7);
+    gyro6_samples_Z = Gyro_data_z((i-1)*7 + 1 : i*7);
 
     for j=2:length(gyro6_samples_X)
         angleX = angleX + ((gyro6_samples_X(j-1) + gyro6_samples_X(j))/(2*fs));
@@ -115,14 +119,14 @@ end
 robot_data_final = -robot_data;
 roll_comp_final = angleZarray;
 
-if length(angleYarray) > length(robot_data)
-    for i=length(robot_data):length(angleYarray)-1
+if length(angleZarray) > length(robot_data)
+    for i=length(robot_data):length(angleZarray)-1
         robot_data_final = [robot_data_final; robot_data(length(robot_data))];
     end
 
-elseif length(robot_data) > length(angleYarray)
-    for i=length(angleYarray):length(robot_data)-1
-        roll_comp_final = [roll_comp_final; angleYarray(length(angleYarray))];
+elseif length(robot_data) > length(angleZarray)
+    for i=length(angleZarray):length(robot_data)-1
+        roll_comp_final = [roll_comp_final; angleZarray(length(angleZarray))];
     end
 
 end
@@ -150,10 +154,31 @@ elseif length(align_imu_data) > length(align_robot_data)
 
 end
 
+array_imu = align_imu_data_final;
+array_robot = align_robot_data_final;
+
+%% Last cycle cutoff
+
+array_imu = array_imu(1:2169);
+array_robot = array_robot(1:2169);
+
+%% Align Signals
+
+[array_imu_aligned, array_robot_aligned] = alignsignals(array_imu, array_robot, Method = "risetime");
+
+m = zeros((length(array_imu_aligned)-length(array_robot_aligned)), 1);
+
+array_robot_aligned = [array_robot_aligned; m];
+
+%% Last cycle cutoff
+
+array_imu = array_imu_aligned(1:2169);
+array_robot = array_robot_aligned(1:2169);
+
 %% Error calculation
 rms_error = [];
 
-residuals = robot_data_final - roll_comp_final;
+residuals = array_imu - array_robot;
 squared_residuals = residuals.^2;
 mean_squared_residuals = mean(squared_residuals);
 

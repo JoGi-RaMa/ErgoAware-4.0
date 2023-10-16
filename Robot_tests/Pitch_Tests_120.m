@@ -36,11 +36,13 @@ for i = 1:length(Gyro_data_index)
     end 
 end
 
-
+Acc_data_x = resample(Acc_data_x, 80, 100);
+Acc_data_y = resample(Acc_data_y, 80, 100);
+Acc_data_z = resample(Acc_data_z, 80, 100);
 
 %% Process Robot data
 
-robot_data = resample(pitch120robot.Angle, 100, 440);
+robot_data = resample(pitch120robot.Angle, 80, 482);
 
 robot_data = -rad2deg(robot_data);
 
@@ -82,6 +84,15 @@ for i=1:pitch_index
     pitch(i) = 0;
 end
 
+%% Filtering IMU data
+
+filter_order = 4;
+low_freq = 0.1;
+
+[b, a] = butter(filter_order,low_freq, "low");
+
+pitch = filter(b, a, pitch);
+
 %% Gyroscope angle estimation
 
 % angleXarray = zeros(length(Gyro_data_x), 1);
@@ -92,14 +103,14 @@ angleXarray = [];
 angleYarray = [];
 angleZarray = [];
 
-alpha = 0.981646;
-num_groups = length(Gyro_data_x)/6;
+alpha = 0.982207;
+num_groups = length(Gyro_data_x)/7.5;
 
 for i = 1:num_groups
 
-    gyro6_samples_X = Gyro_data_x((i-1)*6 + 1 : i*6);
-    gyro6_samples_Y = Gyro_data_y((i-1)*6 + 1 : i*6);
-    gyro6_samples_Z = Gyro_data_z((i-1)*6 + 1 : i*6);
+    gyro6_samples_X = Gyro_data_x((i-1)*7 + 1 : i*7);
+    gyro6_samples_Y = Gyro_data_y((i-1)*7 + 1 : i*7);
+    gyro6_samples_Z = Gyro_data_z((i-1)*7 + 1 : i*7);
 
     for j=2:length(gyro6_samples_X)
         angleX = angleX + ((gyro6_samples_X(j-1) + gyro6_samples_X(j))/(2*fs));
@@ -131,32 +142,14 @@ elseif length(robot_data) > length(angleYarray)
 
 end
 
-% [align_robot_data align_imu_data] = alignsignals(robot_data, pitch_comp);
-% 
-% align_robot_data_final = align_robot_data;
-% align_imu_data_final = align_imu_data;
-% 
-% if length(align_imu_data) > length(align_robot_data)
-%     for i=length(align_robot_data):length(align_imu_data)-1
-%         align_robot_data_final = [align_robot_data_final; align_robot_data(length(align_robot_data))];
-%     end
-% 
-% elseif length(align_robot_data) > length(align_imu_data)
-%     for i=length(align_imu_data):length(align_robot_data)-1
-%         align_imu_data_final = [align_imu_data_final; align_imu_data(length(align_imu_data))];
-%     end
-% end
-
-% [P, L] = findpeaks(align_imu_data_final);
-% [P2, L2] = findpeaks(align_robot_data_final);
 
 %% Dataset alignment
 
 index_x_start = find(robot_data_final > 0.01, 1, "first");
-index_y_start = 110 + find(pitch_comp_final(110:end) > 0.01, 1, "first");
+index_y_start = find(pitch_comp_final > 0.01, 1, "first");
 
 align_robot_data = robot_data(index_x_start:end, :);
-align_imu_data = pitch_comp(index_y_start:end, :);
+align_imu_data = angleYarray(index_y_start:end, :);
 
 align_robot_data_final = align_robot_data;
 align_imu_data_final = align_imu_data;
@@ -172,6 +165,22 @@ elseif length(align_imu_data) > length(align_robot_data)
     end
 
 end
+
+array_imu = align_imu_data_final;
+array_robot = align_robot_data_final;
+
+%% Align Signals
+
+[array_imu_aligned, array_robot_aligned] = alignsignals(array_imu, array_robot, Method = "risetime");
+
+m = zeros((length(array_imu_aligned)-length(array_robot_aligned)), 1);
+
+array_robot_aligned = [array_robot_aligned; m];
+
+%% Last cycle cutoff
+
+array_imu = array_imu_aligned(1:2240);
+array_robot = array_robot_aligned(1:2240);
 
 %% Error calculation
 rms_error = [];

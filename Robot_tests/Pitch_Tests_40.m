@@ -20,31 +20,31 @@ Acc_data_x = [];
 Acc_data_y = [];
 Acc_data_z = [];
 
-Gyro_data_index = pitch40pausado.GyrX ~= 0, 1:3; %índices
+Gyro_data_index = pitch40.GyrX ~= 0, 1:3; %índices
 
 for i = 1:length(Gyro_data_index)
     if(Gyro_data_index(i) == 1)
-        Gyro_data_x = [Gyro_data_x; pitch40pausado.GyrX(i)];
-        Gyro_data_y = [Gyro_data_y; pitch40pausado.GyrY(i)];
-        Gyro_data_z = [Gyro_data_z; pitch40pausado.GyrZ(i)];
+        Gyro_data_x = [Gyro_data_x; pitch40.GyrX(i)];
+        Gyro_data_y = [Gyro_data_y; pitch40.GyrY(i)];
+        Gyro_data_z = [Gyro_data_z; pitch40.GyrZ(i)];
     
     else
-        Acc_data_x = [Acc_data_x; pitch40pausado.AccX(i)];
-        Acc_data_y = [Acc_data_y; pitch40pausado.AccY(i)];
-        Acc_data_z = [Acc_data_z; pitch40pausado.AccZ(i)];
+        Acc_data_x = [Acc_data_x; pitch40.AccX(i)];
+        Acc_data_y = [Acc_data_y; pitch40.AccY(i)];
+        Acc_data_z = [Acc_data_z; pitch40.AccZ(i)];
 
     end 
 end
 
-Acc_data_x = resample(Acc_data_x, 90, 100);
-Acc_data_y = resample(Acc_data_y, 90, 100);
-Acc_data_z = resample(Acc_data_z, 90, 100);
+Acc_data_x = resample(Acc_data_x, 80, 100);
+Acc_data_y = resample(Acc_data_y, 80, 100);
+Acc_data_z = resample(Acc_data_z, 80, 100);
 
 
 
 %% Process Robot data
 
-robot_data = resample(pitch40pausadorobot2.Angle, 90, 482);
+robot_data = resample(pitch40robot.Angle, 80, 473);
 
 robot_data = -rad2deg(robot_data);
 
@@ -96,14 +96,14 @@ angleXarray = [];
 angleYarray = [];
 angleZarray = [];
 
-alpha = 0.981646;
-num_groups = length(Gyro_data_x)/6.67;
+alpha = 0.982207;
+num_groups = length(Gyro_data_x)/7.5;
 
 for i = 1:num_groups
 
-    gyro6_samples_X = Gyro_data_x((i-1)*6 + 1 : i*6);
-    gyro6_samples_Y = Gyro_data_y((i-1)*6 + 1 : i*6);
-    gyro6_samples_Z = Gyro_data_z((i-1)*6 + 1 : i*6);
+    gyro6_samples_X = Gyro_data_x((i-1)*7 + 1 : i*7);
+    gyro6_samples_Y = Gyro_data_y((i-1)*7 + 1 : i*7);
+    gyro6_samples_Z = Gyro_data_z((i-1)*7 + 1 : i*7);
 
     for j=2:length(gyro6_samples_X)
         angleX = angleX + ((gyro6_samples_X(j-1) + gyro6_samples_X(j))/(2*fs));
@@ -116,7 +116,7 @@ for i = 1:num_groups
     anglexarray = [angleXarray; angleX];
     angleYarray = [angleYarray; pitch_comp];
     angleZarray = [angleZarray; angleZ];
-end
+end 
 
 %% Array processing
 
@@ -158,10 +158,36 @@ elseif length(align_imu_data) > length(align_robot_data)
 
 end
 
+array_imu = align_imu_data_final;
+array_robot = align_robot_data_final;
+
+%% Signal Filtering 
+
+order = 4;
+low_freq = 0.1;
+
+[b, a] = butter(order, low_freq, "low");
+
+array_imu = filter(b, a, array_imu);
+
+%% Align Signals
+
+[array_imu_aligned, array_robot_aligned] = alignsignals(array_imu, array_robot, Method = "risetime");
+
+m = zeros((length(array_imu_aligned)-length(array_robot_aligned)), 1);
+
+array_robot_aligned = [array_robot_aligned; m];
+
+%% Last cycle cutoff
+
+array_imu = array_imu_aligned(1:6539);
+array_robot = array_robot_aligned(1:6539);
+
+
 %% Error calculation
 rms_error = [];
 
-residuals = align_robot_data_final - align_imu_data_final;
+residuals = array_robot - array_imu;
 squared_residuals = residuals.^2;
 mean_squared_residuals = mean(squared_residuals);
 

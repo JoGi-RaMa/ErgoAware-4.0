@@ -4,7 +4,9 @@ angleX = 0;
 angleY = 0;
 angleZ = 0;
 
-Accel_roll = 0;
+Accel_pitch = 0;
+acc_roll = 0;
+pitch = [];
 
 fs = 535;
 
@@ -18,18 +20,18 @@ Acc_data_x = [];
 Acc_data_y = [];
 Acc_data_z = [];
 
-Gyro_data_index = roll40.GyrX ~= 0, 1:3; %índices
+Gyro_data_index = pitch40pausado.GyrX ~= 0, 1:3; %índices
 
 for i = 1:length(Gyro_data_index)
     if(Gyro_data_index(i) == 1)
-        Gyro_data_x = [Gyro_data_x; roll40.GyrX(i)];
-        Gyro_data_y = [Gyro_data_y; roll40.GyrY(i)];
-        Gyro_data_z = [Gyro_data_z; roll40.GyrZ(i)];
+        Gyro_data_x = [Gyro_data_x; pitch40pausado.GyrX(i)];
+        Gyro_data_y = [Gyro_data_y; pitch40pausado.GyrY(i)];
+        Gyro_data_z = [Gyro_data_z; pitch40pausado.GyrZ(i)];
     
     else
-        Acc_data_x = [Acc_data_x; roll40.AccX(i)];
-        Acc_data_y = [Acc_data_y; roll40.AccY(i)];
-        Acc_data_z = [Acc_data_z; roll40.AccZ(i)];
+        Acc_data_x = [Acc_data_x; pitch40pausado.AccX(i)];
+        Acc_data_y = [Acc_data_y; pitch40pausado.AccY(i)];
+        Acc_data_z = [Acc_data_z; pitch40pausado.AccZ(i)];
 
     end 
 end
@@ -38,9 +40,11 @@ Acc_data_x = resample(Acc_data_x, 80, 100);
 Acc_data_y = resample(Acc_data_y, 80, 100);
 Acc_data_z = resample(Acc_data_z, 80, 100);
 
+
+
 %% Process Robot data
 
-robot_data = resample(roll40robot.Angle, 80, 484);
+robot_data = resample(pitch40pausadorobot2.Angle, 80, 473);
 
 robot_data = -rad2deg(robot_data);
 
@@ -49,37 +53,37 @@ Acc_data_x = Acc_data_x/max(Acc_data_x);
 Acc_data_y = Acc_data_y/max(Acc_data_y);
 Acc_data_z = Acc_data_z/max(Acc_data_z);
 
-acc_roll = 0;
+acc_pitch = 0;
 
-roll = [];
+pitch = [];
 
 label = [];
 
 for i=1:length(Acc_data_x)
 
-    raw_angle = atan2d(Acc_data_y(i), -Acc_data_x(i));
+    raw_angle = atan2d(Acc_data_z(i), -Acc_data_x(i));
 
-    if(Acc_data_x(i) > 0.7 && Acc_data_y(i) < 0.05 && Acc_data_y(i) > -0.05)
-        if(roll(i-1) > 170)
-            acc_roll = 180;
-        elseif(roll(i-1) < -170)
-            acc_roll = -180;
+    if(Acc_data_x(i) > 0.7 && Acc_data_z(i) < 0.05 && Acc_data_z(i) > -0.05)
+        if(pitch(i-1) > 170)
+            acc_pitch = 180;
+        elseif(pitch(i-1) < -170)
+            acc_pitch = -180;
         end
     else
-        acc_roll = raw_angle;
+        acc_pitch = raw_angle;
     end
 
-    roll = [roll; acc_roll];
+    pitch = [pitch; acc_pitch];
 end
 
- roll = 180 + roll;
+pitch = 180 - pitch;
 
-roll_norm =  roll/180;
+%pitch_norm =  pitch/180;
 
-roll_index = find(roll < 170, 1, "first");
+pitch_index = find(pitch == 0, 1, "first");
 
-for i=1:roll_index
-    roll(i) = 0;
+for i=1:pitch_index
+    pitch(i) = 0;
 end
 
 %% Gyroscope angle estimation
@@ -92,7 +96,7 @@ angleXarray = [];
 angleYarray = [];
 angleZarray = [];
 
-alpha = 0.981646;
+alpha = 0.982207;
 num_groups = length(Gyro_data_x)/7.5;
 
 for i = 1:num_groups
@@ -107,26 +111,26 @@ for i = 1:num_groups
         angleZ = angleZ + ((gyro6_samples_Z(j-1) + gyro6_samples_Z(j))/(2*fs));
     end
 
-    roll_comp = (alpha * roll(i)) + ((1 - alpha) * angleZ);
+    pitch_comp = (alpha * pitch(i)) + ((1 - alpha) * angleY);
 
     anglexarray = [angleXarray; angleX];
-    angleYarray = [angleYarray; angleY];
-    angleZarray = [angleZarray; roll_comp];
-end
+    angleYarray = [angleYarray; pitch_comp];
+    angleZarray = [angleZarray; angleZ];
+end 
 
 %% Array processing
 
-robot_data_final = -robot_data;
-roll_comp_final = angleZarray;
+robot_data_final = robot_data;
+pitch_comp_final = angleYarray;
 
-if length(angleZarray) > length(robot_data)
-    for i=length(robot_data):length(angleZarray)-1
-        robot_data_final = [robot_data_final; robot_data(length(robot_data))];
+if length(angleYarray) > length(robot_data)
+    for i=length(robot_data):length(angleYarray)
+        robot_data_final(i) = robot_data(length(robot_data));
     end
 
-elseif length(robot_data) > length(angleZarray)
-    for i=length(angleZarray):length(robot_data)-1
-        roll_comp_final = [roll_comp_final; angleZarray(length(angleZarray))];
+elseif length(robot_data) > length(angleYarray)
+    for i=length(angleYarray):length(robot_data)
+        pitch_comp_final(i) = angleYarray(length(angleYarray));
     end
 
 end
@@ -134,10 +138,10 @@ end
 %% Dataset alignment
 
 index_x_start = find(robot_data_final > 0.01, 1, "first");
-index_y_start = find(roll_comp_final > 0.01, 1, "first");
+index_y_start = 110 + find(pitch_comp_final(110:end) > 0.01, 1, "first");
 
-align_robot_data = robot_data_final(index_x_start:end, :);
-align_imu_data = angleZarray(index_y_start:end, :);
+align_robot_data = robot_data(index_x_start:end, :);
+align_imu_data = pitch(index_y_start:end, :);
 
 align_robot_data_final = align_robot_data;
 align_imu_data_final = align_imu_data;
@@ -167,13 +171,12 @@ array_robot_aligned = [array_robot_aligned; m];
 
 %% Last cycle cutoff
 
-array_imu = array_imu_aligned(1:6706);
-array_robot = array_robot_aligned(1:6706);
-
+array_imu = array_imu_aligned(1:10345);
+array_robot = array_robot_aligned(1:10345);
 %% Error calculation
 rms_error = [];
 
-residuals = array_imu - array_robot;
+residuals = array_robot - array_imu;
 squared_residuals = residuals.^2;
 mean_squared_residuals = mean(squared_residuals);
 
