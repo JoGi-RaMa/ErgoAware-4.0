@@ -103,7 +103,7 @@ angleXarray = [];
 angleYarray = [];
 angleZarray = [];
 
-alpha = 0.982207;
+alpha = 0.981646;
 num_groups = length(Gyro_data_x)/7.5;
 
 for i = 1:num_groups

@@ -92,7 +92,7 @@ angleXarray = [];
 angleYarray = [];
 angleZarray = [];
 
-alpha = 0.981646;
+alpha = 0.982207;
 num_groups = length(Gyro_data_x)/7.5;
 
 for i = 1:num_groups
@@ -167,8 +167,8 @@ array_robot_aligned = [array_robot_aligned; m];
 
 %% Last cycle cutoff
 
-array_imu = array_imu_aligned(1:6706);
-array_robot = array_robot_aligned(1:6706);
+array_imu = array_imu_aligned(1:6529);
+array_robot = array_robot_aligned(1:6529);
 
 %% Error calculation
 rms_error = [];
