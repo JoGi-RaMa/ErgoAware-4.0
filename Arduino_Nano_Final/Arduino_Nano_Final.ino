@@ -5,8 +5,8 @@
 #include <math.h>
 #include <arduinoFFT.h>
 #include <Wire.h>
+#include <AD524X.h>
 
-#define potentiometer_address 0x2C
 
 // Select only one to be true for SAMD21. Must must be placed at the beginning before #include "SAMDTimerInterrupt.h"
 #define USING_TIMER_TC3         true      // Only TC3 can be used for SAMD51
@@ -86,6 +86,8 @@ float B[] = {0.16593348,  0,         -0.99560088, 0,          2.48900221,  0, -3
 
 
 arduinoFFT FFT;
+
+AD5241 AD01(0x2C);
 
 float fft_calc()
 {
@@ -173,13 +175,16 @@ float calibration_sequence(float o)
 
 void potenciometer_resistance()
 {
-  byte instruction_byte = 0b00000000; 
-  byte data_bits = 0b11111111; //For a resistance of 1M
-  
-  Wire.beginTransmission(potentiometer_address);
-  Wire.write(instruction_byte);
-  Wire.write(data_bits);
-  Wire.endTransmission();
+  //bool b = AD01.begin();
+  //AD01.write(1, 128);
+  //byte address = 0b01011000;
+  //byte instruction_byte = 0b00000000; 
+  //byte data_bits = 0b11111111; //For a resistance of 1M
+  bool b = AD01.begin();
+  Serial.println(AD01.isConnected());
+  Serial.println(AD01.pmCount()); 
+
+  AD01.write(0, 0);
 }
 
 
@@ -190,7 +195,6 @@ void TimerHandler()
 {
   if(k < n)
   {
-    
     a[k] = ((analogRead(A0) * (3.3/4095.0)) - offset)/mvc;
     if (k == 0){
       f[k] = (- A[1]*f[127] - A[2]*f[126] - A[3]*f[125] - A[4]*f[124] - A[5]*f[123] - A[6]*f[122] - A[7]*f[121] - A[8]*f[120] - A[9]*f[119] - A[10]*f[118] - A[11]*f[117] - A[12]*f[116] + B[0]*a[k] + B[1]*a[127] + B[2]*a[126] + B[3]*a[125] + B[4]*a[124] + B[5]*a[123] + B[6]*a[122] + B[7]*a[121] + B[8]*a[120] + B[9]*a[119] + B[10]*a[118] + B[11]*a[117] + B[12]*a[116])/A[0];
@@ -231,7 +235,6 @@ void TimerHandler()
     else{
       f[k] = (- A[1]*f[k-1] - A[2]*f[k-2] - A[3]*f[k-3] - A[4]*f[k-4] - A[5]*f[k-5] - A[6]*f[k-6] - A[7]*f[k-7] - A[8]*f[k-8] - A[9]*f[k-9] - A[10]*f[k-10] - A[11]*f[k-11] - A[12]*f[k-12] + B[0]*a[k] + B[1]*a[k-1] + B[2]*a[k-2] + B[3]*a[k-3] + B[4]*a[k-4] + B[5]*a[k-5] + B[6]*a[k-6] + B[7]*a[k-7] + B[8]*a[k-8] + B[9]*a[k-9] + B[10]*a[k-10] + B[11]*a[k-11] + B[12]*a[k-12])/A[0];
     }
-    
     float absValue = abs(f[k]);
     rmsBuffer[k] = absValue * absValue;
     k++;
@@ -242,7 +245,6 @@ void TimerHandler()
     {
       k = 0;
       flag = true;
-      
     }
   }
 }
@@ -253,6 +255,7 @@ void setup()
   Serial.begin(249600);
   Serial1.begin(249600);
   Wire.begin();
+  Wire.setClock(400000);
 
   ADC->CTRLB.bit.PRESCALER = ADC_CTRLB_PRESCALER_DIV128_Val;
   //ADC->CTRLB.bit.RESSEL = ADC_CTRLB_RESSEL_12BIT;
@@ -285,7 +288,7 @@ void loop()
   
   if(flag)
   {
-    digitalWrite(6, HIGH);
+    digitalWrite(7, HIGH);
     k = 0;
     j = 0;
     static int rmsCounter = 0;
@@ -306,6 +309,8 @@ void loop()
         rmsSum -= rmsBuffer[i - n + windowWidth/sampleInterval];
       }
     }
+    
+    //digitalWrite(7, LOW);
 
   // send the raw signal, filtered signal and RMS
     /*while(j < n - 1)
@@ -332,8 +337,10 @@ void loop()
 
     if (rmsCounter == 3) 
     {
-      digitalWrite(7, HIGH);
+      digitalWrite(7, LOW);
+      digitalWrite(6, HIGH);
       fft_calc();
+      
       // Send the 3 values over serial
       for (int i = 0; i < 3; i++) 
       {
@@ -347,13 +354,13 @@ void loop()
           Serial1.print(";");
           Serial1.println(medianFrequency);
         }
+        
       } // End of batch
       // Reset the counter and timer
       rmsCounter = 0;
-      digitalWrite(7, LOW);
+      digitalWrite(6, LOW);
     }
-
-    digitalWrite(6, LOW);
+    
     flag = false; 
   }
 }
