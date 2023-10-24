@@ -183,8 +183,7 @@ void potenciometer_resistance()
   bool b = AD01.begin();
   Serial.println(AD01.isConnected());
   Serial.println(AD01.pmCount()); 
-
-  AD01.write(0, 0);
+  AD01.write(0, 10);
 }
 
 
@@ -353,6 +352,7 @@ void loop()
           Serial1.print(rmsValues[i]);
           Serial1.print(";");
           Serial1.println(medianFrequency);
+          //Serial.print(cmd);
         }
         
       } // End of batch

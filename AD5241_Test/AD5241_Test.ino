@@ -4,8 +4,6 @@
 
 AD5241 AD01(0x2C);
 
-
-
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(249600);
@@ -20,6 +18,21 @@ void setup() {
 
 void loop() {
 
-  AD01.write(0, 2);
-  delay(1000);
+  AD01.write(0, 20);
+  float voltage = (analogRead(A0) * (3.3/1023.0));
+  Serial.print("Voltage: ");
+  Serial.println(voltage, 3);
+  delay(3000);
+
+  AD01.write(0, 30);
+  voltage = (analogRead(A0) * (3.3/1023.0));
+  Serial.print("Voltage: ");
+  Serial.println(voltage, 3);
+  delay(3000);
+
+  AD01.write(0, 40);
+  voltage = (analogRead(A0) * (3.3/1023.0));
+  Serial.print("Voltage: ");
+  Serial.println(voltage, 3);
+  delay(3000);
 }
